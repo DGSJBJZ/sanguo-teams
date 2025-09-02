@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武将组合匹配查询 - GitHub稳定版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --wei-color: #3b82f6;
+            --shu-color: #ef4444;
+            --wu-color: #f59e0b;
+            --qun-color: #8b5cf6;
+            --command-color: #f97316;
+            --active-color: #10b981;
+            --passive-color: #8b5cf6;
+            --pursue-color: #ec4899;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+            padding: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+        
+        .description {
+            font-size: 14px;
+            opacity: 0.9;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-container {
+            flex: 1;
+            min-width: 0;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1e293b;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2 i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .categories-wrapper {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .category {
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+        
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .category-title {
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex: 1;
+            margin-right: 8px;
+        }
+        
+        .category-title .count {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .select-all-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-size: 12px;
+        }
+        
+        .select-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .wei .category-title { background-color: var(--wei-color); }
+        .shu .category-title { background-color: var(--shu-color); }
+        .wu .category-title { background-color: var(--wu-color); }
+        .qun .category-title { background-color: var(--qun-color); }
+        .command .category-title { background-color: var(--command-color); }
+        .active .category-title { background-color: var(--active-color); }
+        .passive .category-title { background-color: var(--passive-color); }
+        .pursue .category-title { background-color: var(--pursue-color); }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+            padding: 0 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            padding: 6px 10px;
+            background: #f8fafc;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+        
+        .checkbox-item:hover {
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+        
+        .checkbox-item input {
+            margin-right: 8px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        #submit-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+        
+        #reset-btn {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        button i {
+            margin-right: 6px;
+        }
+        
+        #results {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: none;
+            margin-top: 10px;
+        }
+        
+        .result-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-header h2 {
+            justify-content: center;
+            border: none;
+            color: #6366f1;
+            font-size: 20px;
+        }
+        
+        .combinations-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .combination-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .combination-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .combination-header {
+            padding: 15px;
+            text-align: center;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+        }
+        
+        .combination-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .combination-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .combination-id {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .combination-content {
+            padding: 15px;
+        }
+        
+        .combination-main-image {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .combination-main-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .match-details {
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .progress-container {
+            margin-bottom: 10px;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-fill.general {
+            background: var(--wei-color);
+        }
+        
+        .progress-fill.tactic {
+            background: var(--active-color);
+        }
+        
+        .match-status {
+            text-align: center;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .matched {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .unmatched {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #64748b;
+            font-size: 12px;
+            padding: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            header {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .description {
+                font-size: 13px;
+            }
+            
+            .container {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .form-container {
+                padding: 15px;
+                min-height: auto;
+            }
+            
+            h2 {
+                font-size: 16px;
+            }
+            
+            .category {
+                margin-bottom: 15px;
+            }
+            
+            .category-title {
+                font-size: 14px;
+                padding: 6px 10px;
+            }
+            
+            .checkbox-group {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 6px;
+                max-height: 180px;
+            }
+            
+            .checkbox-item {
+                padding: 5px 8px;
+                font-size: 13px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            button {
+                width: 100%;
+                max-width: none;
+                padding: 10px 15px;
+            }
+            
+            #results {
+                padding: 15px;
+            }
+            
+            .combinations-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .combination-card {
+                padding: 0;
+            }
+            
+            .combination-header {
+                padding: 12px;
+            }
+            
+            .combination-name {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .checkbox-group {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .category-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .select-all-btn {
+                align-self: flex-end;
+                margin-top: 5px;
+            }
+        }
+        
+        /* 滚动条样式 */
+        .checkbox-group::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .checkbox-group::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .checkbox-group::-webkit-scrollbar-thumb {
+            background: #c5c5c5;
+            border-radius: 10px;
+        }
+        
+        .checkbox-group::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>武将组合匹配查询系统</h1>
+        <p class="description">选择您拥有的武将和战法，系统将自动匹配可组成的队伍组合。武将按势力分类，战法按类型分类，方便快速查找。</p>
+    </header>
+
+    <div class="container">
+        <div class="form-container">
+            <h2><i class="fas fa-users"></i> 武将选择</h2>
+            <div class="categories-wrapper">
+                <div class="category wei">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <span>魏国武将</span>
+                            <span class="count">已选: <span id="wei-count">0</span></span>
+                        </div>
+                        <button class="select-all-btn" data-category="wei">全选/取消</button>
+                    </div>
+                    <div class="checkbox-group" id="wei-generals">
+                        <!-- 魏国武将 -->
+                    </div>
+                </div>
+                
+                <div class="category shu">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <span>蜀国武将</span>
+                            <span class="count">已选: <span id="shu-count">0</span></span>
+                        </div>
+                        <button class="select-all-btn" data-category="shu">全选/取消</button>
+                    </div>
+                    <div class="checkbox-group" id="shu-generals">
+                        <!-- 蜀国武将 -->
+                    </div>
+                </div>
+                
+                <div class="category wu">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <span>吴国武将</span>
+                            <span class="count">已选: <span id="wu-count">0</span></span>
+                        </div>
+                        <button class="select-all-btn" data-category="wu">全选/取消</button>
+                    </div>
+                    <div class="checkbox-group" id="wu-generals">
+                        <!-- 吴国武将 -->
+                    </div>
+                </div>
+                
+                <div class="category qun">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <span>群雄武将</span>
+                            <span class="count">已选: <span id="qun-count">0</span></span>
+                        </div>
+                        <button class="select-all-btn" data-category="qun">全选/取消</button>
+                    </div>
+                    <div class="checkbox-group" id="qun-generals">
+                        <!-- 群雄武将 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-container">
+            <h2><i class="fas fa-fire"></i> 战法选择</h2>
+            <div class="categories-wrapper">
+                <div class="category command">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <span>指挥战法</span>
+                            <span class="count">已选: <span id="command-count">0</span></span>
+                        </div>
+                        <button class="select-all-btn" data-category="command">全选/取消</button>
+                    </div>
+                    <div class="checkbox-group" id="command-tactics">
+                        <!-- 指挥战法 -->
+                    </div>
+                </div>
+                
+                <div class="category active">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <span>主动战法</span>
+                            <span class="count">已选: <span id="active-count">0</span></span>
+                        </div>
+                        <button class="select-all-btn" data-category="active">全选/取消</button>
+                    </div>
+                    <div class="checkbox-group" id="active-tactics">
+                        <!-- 主动战法 -->
+                    </div>
+                </div>
+                
+                <div class="category passive">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <span>被动战法</span>
+                            <span class="count">已选: <span id="passive-count">0</span></span>
+                        </div>
+                        <button class="select-all-btn" data-category="passive">全选/取消</button>
+                    </div>
+                    <div class="checkbox-group" id="passive-tactics">
+                        <!-- 被动战法 -->
+                    </div>
+                </div>
+                
+                <div class="category pursue">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <span>追击战法</span>
+                            <span class="count">已选: <span id="pursue-count">0</span></span>
+                        </div>
+                        <button class="select-all-btn" data-category="pursue">全选/取消</button>
+                    </div>
+                    <div class="checkbox-group" id="pursue-tactics">
+                        <!-- 追击战法 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="button-group">
+        <button id="submit-btn"><i class="fas fa-check-circle"></i> 提交查询</button>
+        <button id="reset-btn"><i class="fas fa-redo-alt"></i> 重置选择</button>
+    </div>
+
+    <div id="results">
+        <div class="result-header">
+            <h2><i class="fas fa-clipboard-list"></i> 匹配结果</h2>
+            <p>以下是您可组成的队伍组合：</p>
+        </div>
+        <div class="combinations-list" id="combinations-container">
+            <!-- 组合结果将通过JS动态生成 -->
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2023 三国战略攻略 - 本服务仅供玩家参考 | 数据更新日期: 2023年10月</p>
+    </footer>
+
+    <script>
+        // 预设的10种武将组合（使用GitHub图片链接）
+        const combinations = [
+            {
+                id: 1,
+                name: "魏国智骑",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-1.png",
+                generals: ["曹操", "司马懿", "张辽"],
+                tactics: ["乱世奸雄", "狼顾之相", "突袭", "用武通神", "锋矢阵", "暂避其锋"],
+                description: "高智力骑兵队伍，擅长谋略输出和防御"
+            },
+            {
+                id: 2,
+                name: "蜀国枪兵",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-2.png",
+                generals: ["刘备", "关羽", "张飞"],
+                tactics: ["仁德载世", "威震华夏", "燕人咆哮", "盛气凌敌", "横扫千军", "八门金锁阵"],
+                description: "高武力枪兵队伍，拥有强大的物理输出和控制能力"
+            },
+            {
+                id: 3,
+                name: "吴国弓兵",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-3.jpg",
+                generals: ["孙权", "周瑜", "吕蒙"],
+                tactics: ["坐断东南", "神火计", "白衣渡江", "刮骨疗毒", "夺魂挟魄", "兵无常势"],
+                description: "均衡型弓兵队伍，兼具输出和辅助能力"
+            },
+            {
+                id: 4,
+                name: "蜀国骑兵",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-4.jpg",
+                generals: ["诸葛亮", "赵云", "马超"],
+                tactics: ["神机妙算", "龙胆", "槊血纵横", "草船借箭", "裸衣血战", "卧薪尝胆"],
+                description: "高机动骑兵队伍，拥有强大的爆发力和控制能力"
+            },
+            {
+                id: 5,
+                name: "群雄混编",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-5.jpg",
+                generals: ["吕布", "貂蝉", "华雄"],
+                tactics: ["天下无双", "闭月", "桀骜不驯", "一骑当千", "鬼神霆威", "三势阵"],
+                description: "高爆发混编队伍，擅长快速击破敌方核心"
+            },
+            {
+                id: 6,
+                name: "仙人队伍",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-6.jpg",
+                generals: ["张角", "于吉", "左慈"],
+                tactics: ["五雷轰顶", "兴云布雨", "金丹秘术", "太平道法", "士别三日", "刮骨疗毒"],
+                description: "特殊法术队伍，拥有独特的战斗机制和恢复能力"
+            },
+            {
+                id: 7,
+                name: "吴国突击",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-7.jpg",
+                generals: ["孙策", "太史慈", "甘宁"],
+                tactics: ["江东小霸王", "方阵突击", "锦帆百翎", "暴戾无仁", "折冲御侮", "万箭齐发"],
+                description: "高连击骑兵队伍，擅长多次攻击和追击"
+            },
+            {
+                id: 8,
+                name: "群雄弓兵",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-8.jpg",
+                generals: ["袁绍", "文丑", "颜良"],
+                tactics: ["威震河朔", "勇冠三军", "匹夫之勇", "文武双全", "纵兵劫掠", "白马义从"],
+                description: "高暴击弓兵队伍，拥有强大的爆发输出能力"
+            },
+            {
+                id: 9,
+                name: "魏国混编",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-9.jpg",
+                generals: ["董卓", "贾诩", "李儒"],
+                tactics: ["酒池肉林", "算无遗策", "鸩毒", "用武通神", "士别三日", "伪书相间"],
+                description: "控制型混编队伍，擅长削弱和限制敌方"
+            },
+            {
+                id: 10,
+                name: "吴国智弓",
+                image: "https://raw.githubusercontent.com/dgsjbjz/sanguo-teams/main/images/combination-10.jpg",
+                generals: ["陆逊", "吕蒙", "鲁肃"],
+                tactics: ["火烧连营", "白衣渡江", "济贫好施", "太平道法", "无当飞军", "八门金锁阵"],
+                description: "高智力弓兵队伍，擅长持续伤害和团队辅助"
+            }
+        ];
+
+        // 武将分类
+        const generalCategories = {
+            wei: ["曹操", "司马懿", "张辽", "张郃", "徐晃", "许褚", "典韦", "荀彧", "郭嘉", "董卓", "贾诩", "李儒"],
+            shu: ["刘备", "关羽", "张飞", "诸葛亮", "赵云", "马超", "黄忠", "魏延", "法正"],
+            wu: ["孙权", "周瑜", "吕蒙", "陆逊", "太史慈", "甘宁", "黄盖", "周泰", "鲁肃"],
+            qun: ["吕布", "貂蝉", "华雄", "张角", "于吉", "左慈", "袁绍", "文丑", "颜良"]
+        };
+
+        // 战法分类 - 调整顺序为指挥、主动、被动、追击
+        const tacticCategories = {
+            command: ["盛气凌敌", "锋矢阵", "暂避其锋", "八门金锁阵", "三势阵", "白马义从", "用武通神"],
+            active: ["乱世奸雄", "狼顾之相", "仁德载世", "威震华夏", "坐断东南", "神火计", "神机妙算", 
+                    "天下无双", "五雷轰顶", "江东小霸王", "威震河朔", "酒池肉林", "火烧连营", 
+                    "刮骨疗毒", "夺魂挟魄", "草船借箭", "太平道法", "暴戾无仁", "文武双全"],
+            passive: ["燕人咆哮", "白衣渡江", "闭月", "兴云布雨", "金丹秘术", "方阵突击", "勇冠三军", 
+                     "算无遗策", "济贫好施", "士别三日"],
+            pursue: ["突袭", "龙胆", "槊血纵横", "桀骜不驯", "锦帆百翎", "匹夫之勇", "鸩毒", 
+                    "横扫千军", "兵无常势", "裸衣血战", "卧薪尝胆", "一骑当千", "鬼神霆威", 
+                    "纵兵劫掠", "万箭齐发", "折冲御侮", "伪书相间", "无当飞军"]
+        };
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 生成武将复选框
+            for (const category in generalCategories) {
+                const container = document.getElementById(`${category}-generals`);
+                generalCategories[category].forEach(general => {
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'checkbox-item';
+                    checkboxItem.innerHTML = `
+                        <input type="checkbox" id="general-${general}" name="generals" value="${general}" data-category="${category}">
+                        <label for="general-${general}">${general}</label>
+                    `;
+                    container.appendChild(checkboxItem);
+                });
+            }
+
+            // 生成战法复选框 - 按新顺序生成
+            for (const category in tacticCategories) {
+                const container = document.getElementById(`${category}-tactics`);
+                tacticCategories[category].forEach(tactic => {
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'checkbox-item';
+                    checkboxItem.innerHTML = `
+                        <input type="checkbox" id="tactic-${tactic}" name="tactics" value="${tactic}" data-category="${category}">
+                        <label for="tactic-${tactic}">${tactic}</label>
+                    `;
+                    container.appendChild(checkboxItem);
+                });
+            }
+
+            // 添加事件监听器更新计数
+            document.querySelectorAll('input[name="generals"]').forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectionCount);
+            });
+            
+            document.querySelectorAll('input[name="tactics"]').forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectionCount);
+            });
+
+            // 全选按钮事件
+            document.querySelectorAll('.select-all-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    const checkboxes = document.querySelectorAll(`input[data-category="${category}"]`);
+                    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                    
+                    checkboxes.forEach(cb => {
+                        cb.checked = !allChecked;
+                    });
+                    
+                    updateSelectionCount();
+                });
+            });
+
+            // 提交按钮事件
+            document.getElementById('submit-btn').addEventListener('click', function() {
+                const selectedGenerals = Array.from(document.querySelectorAll('input[name="generals"]:checked')).map(cb => cb.value);
+                const selectedTactics = Array.from(document.querySelectorAll('input[name="tactics"]:checked')).map(cb => cb.value);
+                
+                if (selectedGenerals.length === 0 && selectedTactics.length === 0) {
+                    alert('请至少选择一个武将或战法');
+                    return;
+                }
+                
+                const matchedCombinations = findMatchingCombinations(selectedGenerals, selectedTactics);
+                displayResults(matchedCombinations);
+            });
+
+            // 重置按钮事件
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                document.getElementById('results').style.display = 'none';
+                updateSelectionCount();
+            });
+            
+            // 初始化计数
+            updateSelectionCount();
+        });
+
+        // 更新选择计数
+        function updateSelectionCount() {
+            // 更新武将计数
+            for (const category in generalCategories) {
+                const count = document.querySelectorAll(`input[name="generals"]:checked[data-category="${category}"]`).length;
+                document.getElementById(`${category}-count`).textContent = count;
+            }
+            
+            // 更新战法计数
+            for (const category in tacticCategories) {
+                const count = document.querySelectorAll(`input[name="tactics"]:checked[data-category="${category}"]`).length;
+                document.getElementById(`${category}-count`).textContent = count;
+            }
+        }
+
+        // 查找匹配的组合
+        function findMatchingCombinations(selectedGenerals, selectedTactics) {
+            return combinations.map(comb => {
+                // 检查是否拥有所有武将
+                const hasAllGenerals = comb.generals.every(general => selectedGenerals.includes(general));
+                
+                // 检查是否拥有所有战法
+                const hasAllTactics = comb.tactics.every(tactic => selectedTactics.includes(tactic));
+                
+                // 计算匹配度（拥有多少项）
+                const generalMatchCount = comb.generals.filter(g => selectedGenerals.includes(g)).length;
+                const tacticMatchCount = comb.tactics.filter(t => selectedTactics.includes(t)).length;
+                const totalMatchPercent = (generalMatchCount + tacticMatchCount) / (comb.generals.length + comb.tactics.length);
+                
+                // 计算武将和战法各自的匹配百分比
+                const generalMatchPercent = generalMatchCount / comb.generals.length;
+                const tacticMatchPercent = tacticMatchCount / comb.tactics.length;
+                
+                return {
+                    ...comb,
+                    matched: hasAllGenerals && hasAllTactics,
+                    matchPercent: totalMatchPercent,
+                    generalMatchCount,
+                    tacticMatchCount,
+                    generalMatchPercent,
+                    tacticMatchPercent
+                };
+            }).sort((a, b) => {
+                // 完全匹配的排在前面，然后按匹配度排序
+                if (a.matched && !b.matched) return -1;
+                if (!a.matched && b.matched) return 1;
+                return b.matchPercent - a.matchPercent;
+            });
+        }
+
+        // 显示匹配结果
+        function displayResults(matchedCombinations) {
+            const container = document.getElementById('combinations-container');
+            container.innerHTML = '';
+            
+            if (matchedCombinations.length === 0) {
+                container.innerHTML = '<p class="match-status unmatched">很抱歉，没有找到匹配的组合</p>';
+            } else {
+                matchedCombinations.forEach(comb => {
+                    const card = document.createElement('div');
+                    card.className = 'combination-card';
+                    
+                    card.innerHTML = `
+                        <div class="combination-header">
+                            <div class="combination-info">
+                                <div class="combination-name">${comb.name}</div>
+                                <span class="combination-id">组合 #${comb.id}</span>
+                            </div>
+                        </div>
+                        <div class="combination-content">
+                            <div class="combination-main-image">
+                                <img src="${comb.image}" alt="${comb.name}">
+                            </div>
+                            <div class="match-details">
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span>武将匹配度</span>
+                                        <span>${comb.generalMatchCount}/${comb.generals.length} (${Math.round(comb.generalMatchPercent * 100)}%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill general" style="width: ${comb.generalMatchPercent * 100}%"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span>战法匹配度</span>
+                                        <span>${comb.tacticMatchCount}/${comb.tactics.length} (${Math.round(comb.tacticMatchPercent * 100)}%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill tactic" style="width: ${comb.tacticMatchPercent * 100}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="match-status ${comb.matched ? 'matched' : 'unmatched'}">
+                                ${comb.matched ? 
+                                    '✅ 您已拥有组成此队伍的所有武将和战法' : 
+                                    `总体匹配度: ${Math.round(comb.matchPercent * 100)}%`}
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                });
+            }
+            
+            document.getElementById('results').style.display = 'block';
+            // 平滑滚动到结果区域
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
